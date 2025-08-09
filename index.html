@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Tested AI Tools — Index</title>
+  <style>
+    :root{
+      --bg:#0b0c0f;         /* deep neutral */
+      --panel:#141720;      /* card background */
+      --ink:#e8e9ef;        /* primary text */
+      --muted:#9aa0ae;      /* secondary text */
+      --accent:#7dd3fc;     /* cyan */
+      --accent-2:#a78bfa;   /* violet */
+      --ring:#334155;       /* focus ring */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Ubuntu,Arial,sans-serif;
+      background:linear-gradient(180deg, #0b0c0f 0%, #0f1117 100%);
+      color:var(--ink);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(8px);
+      background:linear-gradient(180deg, rgba(11,12,15,0.9), rgba(11,12,15,0.7));
+      border-bottom:1px solid #1f2430;
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:16px;}
+    .title{
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    .title h1{font-size:20px; margin:0; letter-spacing:0.2px}
+    .title small{color:var(--muted)}
+
+    .filters{
+      display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      margin-top:12px;
+    }
+    .select{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    select, input[type="text"]{
+      width:100%; padding:10px 12px; font-size:14px; color:var(--ink);
+      border:1px solid #243041; background:#0f131b; border-radius:10px;
+      outline:none; box-shadow:0 0 0 0 transparent; transition: box-shadow .2s,border-color .2s;
+    }
+    select:focus, input[type="text"]:focus{ border-color:var(--accent); box-shadow:0 0 0 3px #0ea5e980 }
+
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px}
+    button{
+      appearance:none; border:1px solid #2a3344; background:linear-gradient(180deg,#1a2232,#101623);
+      color:var(--ink); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+    }
+    button:hover{border-color:var(--accent)}
+
+    main{padding:24px 16px}
+    .grid{
+      display:grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap:16px;
+    }
+    .card{
+      border:1px solid #202635; background:var(--panel); border-radius:16px; padding:14px; text-decoration:none; color:inherit;
+      display:flex; flex-direction:column; gap:10px; transition: transform .08s ease, border-color .2s ease;
+    }
+    .card:hover{ transform: translateY(-2px); border-color:var(--accent) }
+    .icon{
+      width:64px; height:64px; border-radius:18px; display:grid; place-items:center; font-size:28px; font-weight:800;
+      background: radial-gradient(100% 100% at 50% 0%, #223047 0%, #121829 100%);
+      border:1px solid #2a3a57; color:#cde7ff; overflow:hidden;
+    }
+    .icon img{width:100%; height:100%; object-fit:cover; display:block}
+    .name{font-size:16px; font-weight:700}
+    .meta{font-size:12px; color:var(--muted)}
+
+    .empty{opacity:.8; padding:24px; text-align:center; border:1px dashed #2a3344; border-radius:12px}
+
+    details.config{margin-top:24px; background:#0f131b; border:1px solid #263346; border-radius:12px;}
+    details.config summary{cursor:pointer; padding:12px 14px; font-weight:700}
+    .cfg{
+      display:grid; grid-template-columns:1fr; gap:8px; padding:0 14px 14px;
+    }
+    .cfg textarea{ width:100%; min-height:200px; padding:12px; background:#0b0f17; color:var(--ink);
+      border:1px solid #233044; border-radius:10px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px }
+    .cfg .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .tag{display:inline-flex; gap:6px; align-items:center; padding:4px 8px; border-radius:999px; border:1px solid #283348; color:var(--muted); font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <h1>My Tested AI Tools — Index</h1>
+        <small>Filter by category and subcategory. Click a card to open the tool.</small>
+      </div>
+
+      <div class="filters" id="filters"><!-- Injected by JS --></div>
+
+      <div class="actions">
+        <input type="text" id="search" placeholder="Search by tool name or tag…" aria-label="Search" />
+        <button id="reset">Reset Filters</button>
+        <button id="exportBtn" title="Download your dataset as JSON">Export JSON</button>
+        <label class="tag"><input type="file" id="importFile" accept="application/json" style="display:none"> <span>Import JSON</span></label>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="resultsInfo" class="meta" style="margin-bottom:10px"></div>
+    <section class="grid" id="grid"><!-- Cards go here --></section>
+
+    <details class="config">
+      <summary>Dataset (advanced): Edit or paste JSON</summary>
+      <div class="cfg">
+        <div class="row">
+          <button id="apply">Apply Changes</button>
+          <span class="meta">The dataset drives categories, subcategories, and cards. Safe to edit.</span>
+        </div>
+        <textarea id="raw"></textarea>
+      </div>
+    </details>
+  </main>
+
+  <!-- Dataset: You will edit here. Each entry is a tool the user has tested. -->
+  <script id="data" type="application/json">
+  {
+    "tools": [
+      {"name":"ChatGPT","url":"https://chat.openai.com/","category":"Text-Oriented AIs","subcategory":"General-Purpose Conversational AIs","tags":["LLM","chat"],"iconEmoji":"💬"},
+      {"name":"Grok","url":"https://x.ai","category":"Text-Oriented AIs","subcategory":"General-Purpose Conversational AIs","tags":["LLM"],"iconEmoji":"🧠"},
+      {"name":"Claude","url":"https://claude.ai","category":"Text-Oriented AIs","subcategory":"General-Purpose Conversational AIs","tags":["LLM"],"iconEmoji":"🤖"},
+      {"name":"Perplexity","url":"https://www.perplexity.ai/","category":"Text-Oriented AIs","subcategory":"Specialized Knowledge/Research Assistants","tags":["search","research"],"iconEmoji":"🔎"},
+      {"name":"GitHub Copilot","url":"https://github.com/features/copilot","category":"Text-Oriented AIs","subcategory":"Code Generators / Programming Assistants","tags":["code"],"iconEmoji":"👨‍💻"},
+
+      {"name":"Midjourney","url":"https://www.midjourney.com/","category":"Visual Media AIs","subcategory":"Image Generators","tags":["art"],"iconEmoji":"🎨"},
+      {"name":"DALL·E","url":"https://openai.com/","category":"Visual Media AIs","subcategory":"Image Generators","tags":["images"],"iconEmoji":"🖼️"},
+      {"name":"Stable Diffusion","url":"https://stability.ai/","category":"Visual Media AIs","subcategory":"Image Generators","tags":["open-source"],"iconEmoji":"🧩"},
+      {"name":"Photoshop (Generative)","url":"https://www.adobe.com/products/photoshop.html","category":"Visual Media AIs","subcategory":"Image Editors / Manipulators","tags":["inpaint","edit"],"iconEmoji":"🪄"},
+      {"name":"Topaz Gigapixel AI","url":"https://www.topazlabs.com/gigapixel-ai","category":"Visual Media AIs","subcategory":"Image Enhancers / Upscalers","tags":["upscale"],"iconEmoji":"🔍"},
+      {"name":"Runway Gen-3","url":"https://runwayml.com/","category":"Visual Media AIs","subcategory":"Video Generators","tags":["video"],"iconEmoji":"🎬"},
+
+      {"name":"ElevenLabs","url":"https://elevenlabs.io/","category":"Audio & Music AIs","subcategory":"Speech Synthesis / Voice Cloning","tags":["voice"],"iconEmoji":"🗣️"},
+      {"name":"Suno","url":"https://suno.com/","category":"Audio & Music AIs","subcategory":"Music Composition & Generation","tags":["music"],"iconEmoji":"🎵"},
+      {"name":"Adobe Podcast Enhance","url":"https://podcast.adobe.com/","category":"Audio & Music AIs","subcategory":"Audio Enhancement & Restoration","tags":["enhance"],"iconEmoji":"🎙️"},
+
+      {"name":"GPT-4o","url":"https://openai.com","category":"Multimodal Creative AIs","subcategory":"Cross-Media Generators","tags":["text","image","audio"],"iconEmoji":"🧬"},
+      {"name":"Gemini","url":"https://ai.google/","category":"Multimodal Creative AIs","subcategory":"Cross-Media Generators","tags":["multimodal"],"iconEmoji":"✨"},
+      {"name":"Inworld","url":"https://inworld.ai/","category":"Multimodal Creative AIs","subcategory":"Interactive Media Generators","tags":["characters"],"iconEmoji":"🎭"},
+
+      {"name":"Tableau AI","url":"https://www.tableau.com/","category":"Data & Knowledge AIs","subcategory":"Data Analysis & Visualization","tags":["BI"],"iconEmoji":"📊"},
+      {"name":"DataRobot","url":"https://www.datarobot.com/","category":"Data & Knowledge AIs","subcategory":"Predictive & Forecasting Models","tags":["predict"],"iconEmoji":"📈"},
+
+      {"name":"OpenAI o3 Agents (example)","url":"https://openai.com","category":"Autonomous Agents","subcategory":"Task Automation Agents","tags":["agents"],"iconEmoji":"⚙️"},
+      {"name":"Tesla FSD","url":"https://www.tesla.com/","category":"Autonomous Agents","subcategory":"Robotics Control AIs","tags":["autonomy"],"iconEmoji":"🚗"},
+
+      {"name":"PathAI","url":"https://www.pathai.com/","category":"Specialized Domain AIs","subcategory":"Medical Diagnostic AIs","tags":["medical"],"iconEmoji":"🧪"},
+      {"name":"Harvey","url":"https://www.harvey.ai/","category":"Specialized Domain AIs","subcategory":"Legal & Compliance AIs","tags":["legal"],"iconEmoji":"⚖️"}
+    ]
+  }
+  </script>
+
+  <script>
+    const state = {
+      data: null,
+      selects: {},
+      search: ''
+    };
+
+    function loadData(){
+      const raw = document.getElementById('data').textContent.trim();
+      try{ state.data = JSON.parse(raw); }
+      catch(e){ alert('Invalid JSON in dataset.'); state.data = {tools: []}; }
+      document.getElementById('raw').value = JSON.stringify(state.data, null, 2);
+    }
+
+    function buildFilters(){
+      const filters = document.getElementById('filters');
+      filters.innerHTML = '';
+
+      const grouped = groupByCategory(state.data.tools);
+      Object.keys(grouped).forEach(cat => {
+        const subcats = Array.from(new Set(grouped[cat].map(t => t.subcategory))).sort();
+        const wrap = document.createElement('div');
+        wrap.className = 'select';
+        const id = slug(cat);
+        wrap.innerHTML = `<label for="${id}">${cat}</label>`;
+        const sel = document.createElement('select');
+        sel.id = id; sel.dataset.category = cat;
+        sel.innerHTML = `<option value="">— All ${escapeHtml(cat)} —</option>` + subcats.map(sc => `<option value="${escapeHtml(sc)}">${escapeHtml(sc)}</option>`).join('');
+        sel.addEventListener('change', render);
+        state.selects[cat] = sel;
+        wrap.appendChild(sel);
+        filters.appendChild(wrap);
+      });
+    }
+
+    function groupByCategory(tools){
+      return tools.reduce((acc,t)=>{(acc[t.category] ||= []).push(t); return acc;},{});
+    }
+
+    function getActiveFilters(){
+      const act = [];
+      for(const [cat,sel] of Object.entries(state.selects)){
+        if(sel.value){ act.push({category:cat, subcategory:sel.value}); }
+      }
+      return act;
+    }
+
+    function matchesFilters(tool, filters){
+      if(filters.length === 0) return true; // show all when nothing selected
+      // Any selected filter qualifies (union of subcategory selections across categories)
+      return filters.some(f => tool.category === f.category && tool.subcategory === f.subcategory);
+    }
+
+    function matchesSearch(tool, q){
+      if(!q) return true;
+      const hay = (tool.name + ' ' + (tool.tags||[]).join(' ')).toLowerCase();
+      return hay.includes(q.toLowerCase());
+    }
+
+    function render(){
+      const grid = document.getElementById('grid');
+      const info = document.getElementById('resultsInfo');
+      const filters = getActiveFilters();
+      const q = state.search;
+
+      const items = state.data.tools
+        .filter(t => matchesFilters(t, filters))
+        .filter(t => matchesSearch(t, q))
+        .sort((a,b)=> a.name.localeCompare(b.name));
+
+      info.textContent = `${items.length} tool${items.length===1?'':'s'} shown` + (filters.length?` • filtered by ${filters.map(f=>`${f.category} → ${f.subcategory}`).join(', ')}`:'') + (q?` • search: "${q}"`: '');
+
+      if(items.length === 0){
+        grid.innerHTML = `<div class="empty">No tools match the current filters.</div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(cardHtml).join('');
+      // add click tracking if desired later
+    }
+
+    function cardHtml(t){
+      const tagStr = (t.tags && t.tags.length) ? `<div class="meta">${t.tags.map(s => '#'+escapeHtml(s)).join(' ')}</div>` : '';
+      const icon = t.iconUrl ? `<span class="icon"><img loading="lazy" src="${escapeHtml(t.iconUrl)}" alt="${escapeHtml(t.name)} icon"></span>` : `<span class="icon" aria-hidden="true">${escapeHtml(t.iconEmoji || '🔧')}</span>`;
+      const safeUrl = t.url || '#';
+      return `
+        <a class="card" href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(t.name)}">
+          ${icon}
+          <div class="name">${escapeHtml(t.name)}</div>
+          <div class="meta">${escapeHtml(t.category)} • ${escapeHtml(t.subcategory)}</div>
+          ${tagStr}
+        </a>`;
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
+    }
+    function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+    function wire(){
+      document.getElementById('search').addEventListener('input', e => { state.search = e.target.value.trim(); render(); });
+      document.getElementById('reset').addEventListener('click', () => {
+        for(const sel of Object.values(state.selects)) sel.value='';
+        document.getElementById('search').value=''; state.search=''; render();
+      });
+      document.getElementById('apply').addEventListener('click', () => {
+        try{ state.data = JSON.parse(document.getElementById('raw').value); }
+        catch(e){ alert('Invalid JSON. Not applied.'); return; }
+        buildFilters(); render();
+      });
+
+      // Export JSON
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'ai-tools-dataset.json'; a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Import JSON
+      const input = document.getElementById('importFile');
+      input.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const text = await file.text();
+        try{
+          const json = JSON.parse(text);
+          state.data = json;
+          document.getElementById('raw').value = JSON.stringify(state.data, null, 2);
+          buildFilters(); render();
+        }catch(err){ alert('Invalid JSON file.'); }
+      });
+      // Make label clickable
+      document.querySelector('label.tag span').addEventListener('click', () => input.click());
+    }
+
+    // Boot
+    loadData();
+    buildFilters();
+    wire();
+    render();
+  </script>
+</body>
+</html>
+
+
+09/08/2025 08:56
+
+Correction: “I actually want to build a website that serves as an index of AI tools I’ve already tested. At the very top of the page, there will be dropdown selectors labeled with the main categories you created. The options in each dropdown will be the subcategories within those larger categories. For each subcategory, the site will display large, bold visual icons for every AI that fits, and each icon will link to the tool in a new browser tab.”
+
+I’ve delivered a single-file website in the canvas (previewable right here). It implements:
+
+Top-of-page dropdowns for each main category.
+
+Options = that category’s subcategories.
+
+Large icon cards per tool; each opens the tool in a new tab.
+
+Search, Reset, and Import/Export JSON so you can manage your tested tools without a build step.
+
+A built-in Dataset panel where you can paste/edit your JSON (<script id="data">).
+
+
+How to use it (fast)
+
+1. Open the canvas file and hit Preview.
+
+
+2. In the Dataset (advanced) panel, paste your real tool list.
+
+
+3. Click Apply Changes.
+
+
+4. Export JSON to back it up.
+
+
+5. Deploy by uploading this single HTML file to GitHub Pages (or Netlify/Vercel/Cloudflare Pages). Done.
+
+
+
+Data format (what to add/edit)
+
+Each tool entry supports:
+
+{
+  "name": "Tool Name",
+  "url": "https://toolsite.com",
+  "category": "Visual Media AIs",
+  "subcategory": "Image Generators",
+  "tags": ["tag1","tag2"],
+  "iconEmoji": "🎨",
+  "iconUrl": "https://…/logo.png"   // optional; overrides emoji if provided
+}
+
+category must match one of the main classes (e.g., “Text-Oriented AIs”, “Visual Media AIs”, “Audio & Music AIs”, “Multimodal Creative AIs”, “Data & Knowledge AIs”, “Autonomous Agents”, “Specialized Domain AIs”).
+
+subcategory must match one of the subcategories under that class (exact text).
+
+Provide either iconUrl (preferred if you have brand marks) or iconEmoji.
+
+
+Next steps (your call)
+
+Want multi-select per category (e.g., filter several subcategories at once)?
+
+Prefer a React/Tailwind version with a JSON file loader and URL query params for shareable filters?
+
+Need localStorage to mark “tested,” “approved,” or “favorite” tools with badges?
+
+
+Tell me which enhancements you want and I’ll ship the upgrade.
+
